@@ -48,19 +48,15 @@ class AHP:
         temp[x][y] = self.pairwise_matrix[x][y] * self.criteria_weights[y]
         weighted_sum_value[x] += temp[x][y]
             
-
     for x in range(self.length):
       ratio[x] += weighted_sum_value[x] / self.criteria_weights[x]
 
     sum_temp = 0.0
     for val in ratio:
       sum_temp += val
-
     lambda_max = sum_temp / self.length    
-
     self.ci = (lambda_max - self.length) / (self.length - 1)   
     self.cr = self.ci / self.random_index[self.length]
-
     if self.cr < 0.10:
       print(f"CR is OK\nCR = {self.cr}")
     else:
@@ -68,7 +64,33 @@ class AHP:
 
   def show_criteria_weights(self):
     criteria_dict = {key: value for key, value in zip(self.criteria, self.criteria_weights)}
-    return dict(sorted(criteria_dict.items(), key=lambda x: x[1], reverse=True))
+    sorted_criteria =  dict(sorted(criteria_dict.items(), key=lambda x: x[1], reverse=True))
+    for criteria, weight in sorted_criteria.items():
+      print(f"{criteria}: {weight}")
+  
+  def show_recommendation(self):
+    decision_matrix = df.drop(labels="skill_field", axis=1).values
+    normalized_decision_matrix = []
+
+    for row in decision_matrix:
+      row_sum = sum(row)
+      normalized_row = [val / row_sum for val in row]
+      normalized_decision_matrix.append(normalized_row)
+
+    weighted_scores = []
+    for row in normalized_decision_matrix:
+      weighted_score = sum([val * weight for val, weight in zip(row, self.criteria_weights)])
+      weighted_scores.append(weighted_score)
+    
+    total_weighted_score = sum(weighted_scores)
+    overall_priorities = [score / total_weighted_score for score in weighted_scores]
+
+    ranked_alternatives = sorted(zip(self.alternative, overall_priorities), key=lambda x: x[1], reverse=True)
+
+    print(f"\n")
+    for alternative, priority in ranked_alternatives:
+      print(f"{alternative}: {priority}")
+
         
         
 
@@ -104,5 +126,7 @@ if __name__ == '__main__':
   ahp.calculate_consistency()
 
   # display all criteria with their weight
-  print(ahp.show_criteria_weights())
+  ahp.show_criteria_weights()
+
+  ahp.show_recommendation()
 
