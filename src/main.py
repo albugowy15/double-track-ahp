@@ -88,8 +88,8 @@ class AHP:
     ranked_alternatives = sorted(zip(self.alternative, overall_priorities), key=lambda x: x[1], reverse=True)
 
     print(f"\n")
-    for alternative, priority in ranked_alternatives:
-      print(f"{alternative}: {priority}")
+    for key, val in ranked_alternatives:
+      print(f"{key}: {val}")
 
         
         
