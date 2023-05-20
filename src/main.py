@@ -15,27 +15,24 @@ class AHP:
     self.ci = 0.0
     self.cr = 0.0
 
-  def calculate_sum(self):
-    for x in range(self.length):
-      for j in range(self.length):
-        self.calculated_sum[x] += self.pairwise_matrix[j][x]
+  def __calculate_sum(self):
+    for col in range(self.length):
+      for row in range(self.length):
+        self.calculated_sum[col] += self.pairwise_matrix[row][col]
 
     return self.calculated_sum
     
   def normalize_matrix(self):
-    for x in range(self.length):
-      for y in range(self.length):
-        self.normalized_matrix[x][y] = (self.pairwise_matrix[x][y] / self.calculated_sum[y])
+    self.__calculate_sum()
+    for row in range(self.length):
+      for col in range(self.length):
+        self.normalized_matrix[row][col] = (self.pairwise_matrix[row][col] / self.calculated_sum[col])
 
     return self.normalized_matrix
   
   def calculate_criteria_weight(self):
     for x in range(self.length):
-      sum_avg = 0.0
-      for y in range(self.length):
-        sum_avg += self.normalized_matrix[x][y]
-        if y == 5:
-          self.criteria_weights[x] = sum_avg / self.length
+      self.criteria_weights[x] = sum(self.normalized_matrix[x]) / self.length
     
     return self.criteria_weights
   
@@ -51,10 +48,7 @@ class AHP:
     for x in range(self.length):
       ratio[x] += weighted_sum_value[x] / self.criteria_weights[x]
 
-    sum_temp = 0.0
-    for val in ratio:
-      sum_temp += val
-    lambda_max = sum_temp / self.length    
+    lambda_max = sum(ratio) / self.length    
     self.ci = (lambda_max - self.length) / (self.length - 1)   
     self.cr = self.ci / self.random_index[self.length]
     if self.cr < 0.10:
@@ -113,8 +107,6 @@ if __name__ == '__main__':
   ]
 
   ahp = AHP(df, criteria, alternative, pairwise_matrix)
-  # sum value for each column
-  ahp.calculate_sum()
 
   # normalize matrix
   ahp.normalize_matrix()
