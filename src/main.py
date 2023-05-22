@@ -25,6 +25,35 @@ class AHP:
 
         return self.calculated_sum
 
+    def __mpc_sub_criteria(self, length):
+        sub_mpc = [[0.0] * length for _ in range(length)]
+        sub_sum = [0.0] * length
+        sub_weights = [0.0] * length
+
+        for row in range(length):
+            for col in range(length):
+                sub_mpc[row][col] = (col + 1) / (row + 1)
+
+        # calculate col sum
+        for col in range(length):
+            for row in range(length):
+                sub_sum[col] += sub_mpc[row][col]
+
+        # normalize mpc
+        for row in range(length):
+            for col in range(length):
+                sub_mpc[row][col] /= sub_sum[col]
+            sub_weights[row] = sum(sub_mpc[row]) / length
+
+        return sub_weights
+
+    def __calculate_sub_criteria_priority_vector(self):
+        all_sub = []
+        for _ in range(5):
+            all_sub.append(self.__mpc_sub_criteria(4))
+        return all_sub
+
+
     def normalize_matrix(self):
         """Normalize the pairwise matrix"""
         self.__calculate_sum()
@@ -41,7 +70,7 @@ class AHP:
         return self.criteria_weights
 
     def calculate_consistency(self):
-        """Calculate and check consistency ration"""
+        """Calculate and check consistency ratio"""
         temp = [[0.0] * self.length for _ in range(self.length)]
         weighted_sum_value = [0.0] * self.length
         ratio = [0.0] * self.length
@@ -70,20 +99,19 @@ class AHP:
     def show_recommendation(self):
         """Display final recommendation for all alternatives"""
         decision_matrix = self.data_frame.drop(labels="skill_field", axis=1).values
-        normalized_decision_matrix = []
+        all_sub_vector = self.__calculate_sub_criteria_priority_vector()
+        len_alternative = len(self.alternative)
+        alternative_matrix = [[0.0 for _ in range(self.length)] for _ in range(len_alternative)]
+        alternative_hpt = []
 
-        for row in decision_matrix:
-            row_sum = sum(row)
-            normalized_row = [val / row_sum for val in row]
-            normalized_decision_matrix.append(normalized_row)
+        for row in range(len_alternative):
+            for col in range(self.length):
+                sub_vec_idx = decision_matrix[row][col] - 1
+                alternative_matrix[row][col] = all_sub_vector[col][sub_vec_idx] * \
+                    self.criteria_weights[col]
+            alternative_hpt.append(sum(alternative_matrix[row]))
 
-        weighted_scores = []
-        for row in normalized_decision_matrix:
-            weighted_score = sum(val * weight for (val, weight) in zip(row, self.criteria_weights))
-            weighted_scores.append(weighted_score)
-        total_weighted_score = sum(weighted_scores)
-        overall_priorities = [score / total_weighted_score for score in weighted_scores]
-        ranked_alternatives = sorted(zip(self.alternative, overall_priorities), \
+        ranked_alternatives = sorted(zip(self.alternative, alternative_hpt), \
                                         key=lambda x: x[1], \
                                         reverse=True)
         print("\n")
